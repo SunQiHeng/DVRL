@@ -24,10 +24,10 @@ import os
 import numpy as np
 from sklearn import metrics
 import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 import tqdm
-from dvrl import dvrl_metrics
-from tensorflow.contrib import layers as contrib_layers
-
+import dvrl_metrics
+import tensorflow.keras.layers as keras_layers
 
 class Dvrl(object):
   """Data Valuation using Reinforcement Learning (DVRL) class.
@@ -192,20 +192,20 @@ class Dvrl(object):
       inputs = tf.concat((self.x_input, self.y_input), axis=1)
 
       # Stacks multi-layered perceptron
-      inter_layer = contrib_layers.fully_connected(
-          inputs, self.hidden_dim, activation_fn=self.act_fn)
+      dense = keras_layers.Dense(self.hidden_dim, activation=self.act_fn)
+      inputs = dense(inputs)
       for _ in range(int(self.layer_number - 3)):
-        inter_layer = contrib_layers.fully_connected(
-            inter_layer, self.hidden_dim, activation_fn=self.act_fn)
-      inter_layer = contrib_layers.fully_connected(
-          inter_layer, self.comb_dim, activation_fn=self.act_fn)
+        dense = keras_layers.Dense(self.hidden_dim, activation=self.act_fn)
+        inputs = dense(inputs)
+      dense = keras_layers.Dense(self.comb_dim, activation=self.act_fn)
+      inputs = dense(inputs)
 
       # Combines with y_hat
-      comb_layer = tf.concat((inter_layer, self.y_hat_input), axis=1)
-      comb_layer = contrib_layers.fully_connected(
-          comb_layer, self.comb_dim, activation_fn=self.act_fn)
-      dve = contrib_layers.fully_connected(
-          comb_layer, 1, activation_fn=tf.nn.sigmoid)
+      inputs = tf.concat((inputs, self.y_hat_input), axis=1)
+      dense = keras_layers.Dense(self.comb_dim, activation=self.act_fn)
+      inputs = dense(inputs)
+      dense = keras_layers.Dense(1, activation=tf.nn.sigmoid)
+      dve = dense(inputs)
 
     return dve
 
@@ -421,15 +421,15 @@ class Dvrl(object):
       y_train_hat = np.abs(y_train_onehot - y_train_valid_pred)/y_train_onehot
 
     # Restores the saved model
-    imported_graph = \
-        tf.train.import_meta_graph(self.checkpoint_file_name + '.meta')
+    imported_graph = tf.train.import_meta_graph(self.checkpoint_file_name + '.meta')
 
     sess = tf.Session()
+
     imported_graph.restore(sess, self.checkpoint_file_name)
 
     # Estimates data value
     est_data_value = self.data_value_evaluator()
-
+    sess.run(tf.global_variables_initializer())
     final_data_value = sess.run(
         est_data_value, feed_dict={
             self.x_input: x_train,

@@ -29,9 +29,9 @@ import pandas as pd
 import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1 import keras
 
-from dvrl import data_loading
-from dvrl import dvrl
-from dvrl import dvrl_metrics
+import data_loading
+import dvrl
+import dvrl_metrics
 
 
 def main(args):

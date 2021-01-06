@@ -30,10 +30,11 @@ import pandas as pd
 from six.moves import urllib
 from sklearn import preprocessing
 import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 from tensorflow.compat.v1.keras import backend
 from tensorflow.compat.v1.keras import datasets
 
-from dvrl import dvrl_utils
+import dvrl_utils
 
 
 def load_tabular_data(data_name, dict_no, noise_rate):
@@ -62,10 +63,8 @@ def load_tabular_data(data_name, dict_no, noise_rate):
 
   # Adult Income dataset
   if data_name == 'adult':
-
     train_url = uci_base_url + 'adult/adult.data'
     test_url = uci_base_url + 'adult/adult.test'
-
     data_train = pd.read_csv(train_url, header=None)
     data_test = pd.read_csv(test_url, skiprows=1, header=None)
 
